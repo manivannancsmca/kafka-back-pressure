@@ -620,3 +620,298 @@ The system is considered enterprise-ready when:
 * DLT Count
 
 These metrics provide complete visibility into system behavior under normal, failure, and extreme-load conditions.
+
+
+# k6 Load Testing for Spring Boot REST API
+
+## 1. Install k6
+
+### Windows
+
+Download and install k6 from the official website:
+
+https://k6.io/
+
+Or install using Chocolatey:
+
+```bash
+choco install k6
+```
+
+Verify the installation:
+
+```bash
+k6 version
+```
+
+---
+
+## 2. Create the Load Test Script
+
+Create a file named:
+
+```text
+order-load-test.js
+```
+
+Add the following code:
+
+```javascript
+import http from 'k6/http';
+
+export default function () {
+
+    http.post(
+        'http://localhost:8080/orders',
+        JSON.stringify({
+            eventId: crypto.randomUUID(),
+            orderId: crypto.randomUUID(),
+            product: 'Laptop - ' + Math.random().toString(36).slice(5),
+            quantity: 1
+        }),
+        {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }
+    );
+}
+```
+
+---
+
+## 3. Start the Spring Boot Application
+
+Ensure your API is running at:
+
+```text
+http://localhost:8080/orders
+```
+
+Example Spring Boot Controller:
+
+```java
+@RestController
+@RequestMapping("/orders")
+public class OrderController {
+
+    @PostMapping
+    public String createOrder(@RequestBody OrderRequest request) {
+        System.out.println(request);
+        return "Order Created";
+    }
+}
+```
+
+---
+
+## 4. Run the Load Test
+
+Execute:
+
+```bash
+k6 run order-load-test.js
+```
+
+k6 will continuously send:
+
+```http
+POST http://localhost:8080/orders
+```
+
+with randomly generated request payloads.
+
+---
+
+## 5. Run with Multiple Virtual Users
+
+### 10 Concurrent Users for 30 Seconds
+
+```bash
+k6 run --vus 10 --duration 30s order-load-test.js
+```
+
+**Details:**
+
+* 10 concurrent virtual users
+* Test duration: 30 seconds
+* Continuous POST requests to the API
+
+---
+
+## 6. Run with 100 Concurrent Users
+
+```bash
+k6 run --vus 100 --duration 1m order-load-test.js
+```
+
+This test is useful for validating:
+
+* Spring Boot REST APIs
+* Kafka Producers
+* MySQL Inserts
+* Redis Caching
+* Microservices Performance
+* Application Scalability
+
+---
+
+## 7. Enterprise-Style Load Testing Script
+
+```javascript
+import http from 'k6/http';
+import { sleep } from 'k6';
+
+export const options = {
+    vus: 50,
+    duration: '1m'
+};
+
+export default function () {
+
+    const payload = JSON.stringify({
+        eventId: crypto.randomUUID(),
+        orderId: crypto.randomUUID(),
+        product: 'Laptop',
+        quantity: 1
+    });
+
+    http.post(
+        'http://localhost:8080/orders',
+        payload,
+        {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }
+    );
+
+    sleep(1);
+}
+```
+
+### Configuration
+
+| Property   | Value                     |
+| ---------- | ------------------------- |
+| VUs        | 50                        |
+| Duration   | 1 Minute                  |
+| Sleep Time | 1 Second Between Requests |
+
+Benefits:
+
+* Prevents unrealistic traffic spikes
+* Simulates real user behavior
+* Produces more accurate performance metrics
+
+---
+
+## 8. Using JWT Authentication
+
+If your API is secured with JWT, include the Authorization header:
+
+```javascript
+http.post(
+    'http://localhost:8080/orders',
+    payload,
+    {
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9...'
+        }
+    }
+);
+```
+
+---
+
+## 9. Call the API Once Without k6
+
+If load testing is not required and you only want to invoke the API once, use JavaScript Fetch API:
+
+```javascript
+fetch('http://localhost:8080/orders', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        eventId: crypto.randomUUID(),
+        orderId: crypto.randomUUID(),
+        product: 'Laptop',
+        quantity: 1
+    })
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error(error));
+```
+
+---
+
+## Sample Test Commands
+
+### Basic Execution
+
+```bash
+k6 run order-load-test.js
+```
+
+### 10 Users for 30 Seconds
+
+```bash
+k6 run --vus 10 --duration 30s order-load-test.js
+```
+
+### 50 Users for 1 Minute
+
+```bash
+k6 run --vus 50 --duration 1m order-load-test.js
+```
+
+### 100 Users for 1 Minute
+
+```bash
+k6 run --vus 100 --duration 1m order-load-test.js
+```
+
+### Generate JSON Report
+
+```bash
+k6 run --out json=result.json order-load-test.js
+```
+
+### Save Console Output
+
+```bash
+k6 run order-load-test.js > output.log
+```
+
+---
+
+## Expected Use Cases
+
+* Spring Boot Performance Testing
+* Kafka Throughput Validation
+* Database Stress Testing
+* Redis Performance Testing
+* Microservices Load Testing
+* API Benchmarking
+* Capacity Planning
+* Scalability Verification
+
+---
+
+## Useful Metrics Produced by k6
+
+* Total Requests
+* Requests Per Second (RPS)
+* Average Response Time
+* P95 Response Time
+* P99 Response Time
+* Error Rate
+* Throughput
+* Data Sent/Received
+* Virtual User Statistics
+
+These metrics help identify bottlenecks in Spring Boot applications, Kafka pipelines, databases, and distributed microservice environments.
