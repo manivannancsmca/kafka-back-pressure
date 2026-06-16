@@ -54,52 +54,35 @@ spring:
       enabled: true
 
   kafka:
-
     bootstrap-servers: localhost:9092
 
     producer:
-
       acks: all
       retries: 10
-
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
       properties:
-
         enable.idempotence: true
-
         linger.ms: 20
 
     consumer:
-
       group-id: order-group
-
       auto-offset-reset: earliest
-
       enable-auto-commit: false
-
       max-poll-records: 50
-
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
 
       properties:
 
         spring.json.trusted.packages: "*"
-
         spring.json.value.default.type: com.kafka_back_pressure.dto.OrderEvent
-
         max.poll.interval.ms: 300000
-
         session.timeout.ms: 30000
 
     listener:
-
       ack-mode: manual
-
       concurrency: 4
 
 management:
